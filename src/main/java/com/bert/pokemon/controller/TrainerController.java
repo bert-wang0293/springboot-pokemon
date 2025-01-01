@@ -15,9 +15,7 @@ public class TrainerController {
 
     @PostMapping("/trainers")
     public List<Trainer> getGoodTrainers(@RequestBody Trainer trainer) {
-        //List<Trainer> trainers = trainerService.getGoodTrainers(8, "Master", 50);
         List<Trainer> trainers = trainerService.getGoodTrainers(trainer);
-        System.out.println("size : " + trainers.size());
         return trainers;
     }
 
@@ -26,8 +24,7 @@ public class TrainerController {
         Map<String, Trainer> list = trainerService.getTrainersWinRateByBattleId(battle_id);
         if (list == null || list.isEmpty()) {
             System.out.println("mapTrainer 為 null 或者為空");
-        } else {
-            System.out.println("size : " + list.size());
+            return null;
         }
         return list;
     }

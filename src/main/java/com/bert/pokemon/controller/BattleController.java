@@ -16,9 +16,7 @@ public class BattleController {
 
     @GetMapping("/battles/{trainer_id}")
     public List<Battle> getBattlesByTrainerId(@PathVariable Integer trainer_id) {
-        System.out.println("trainer_id : " + trainer_id);
         List<Battle> list = battleService.getBattlesByTrainerId(trainer_id);
-        System.out.println("size : " + list.size());
         return list;
     }
 }
