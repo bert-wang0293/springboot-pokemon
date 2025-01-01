@@ -15,7 +15,6 @@ public class TrainerServiceImpl  implements TrainerService {
     private TrainerDao trainerDao;
 
     @Override
-    //public List<Trainer> getGoodTrainers(Integer badges, String trainer_rank, Integer win_rate) {
     public List<Trainer> getGoodTrainers(Trainer trainer) {
         return trainerDao.getGoodTrainers(trainer);
     }

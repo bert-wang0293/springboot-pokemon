@@ -1,7 +1,6 @@
 package com.bert.pokemon.service.impl;
 
 import com.bert.pokemon.dao.PokemonDao;
-import com.bert.pokemon.dao.TrainerDao;
 import com.bert.pokemon.model.Pokemon;
 import com.bert.pokemon.service.PokemonService;
 import org.springframework.beans.factory.annotation.Autowired;

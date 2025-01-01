@@ -20,18 +20,18 @@ public class TrainerDaoImpl implements TrainerDao {
     @Override
     //public List<Trainer> getGoodTrainers(Integer badges, String trainer_rank, Integer win_rate) {
     public List<Trainer> getGoodTrainers(Trainer trainer) {
-        String sql = "SELECT trainer_id, name, badges, trainer_rank, win_rate " +
-                "FROM trainer " +
-                "WHERE badges >= :badges " +
-                "AND trainer_rank = :trainer_rank " +
-                "AND win_rate > :win_rate " +
-                "AND trainer_id IN (" +
-                "  SELECT trainer_id " +
-                "  FROM pokemon " +
-                "  GROUP BY trainer_id " +
-                "  HAVING COUNT(trainer_id) > 3" +
+        String sql = "select trainer_id, name, badges, trainer_rank, win_rate " +
+                "from trainer " +
+                "where badges >= :badges " +
+                "and trainer_rank = :trainer_rank " +
+                "and win_rate > :win_rate " +
+                "and trainer_id in (" +
+                "  select trainer_id " +
+                "  from pokemon " +
+                "  group by trainer_id " +
+                "  having count(trainer_id) > 3" +
                 ") " +
-                "LIMIT 5";
+                "limit 5";
 
         Map<String, Object> map = new HashMap<>();
         map.put("badges", trainer.getBadges());
@@ -44,15 +44,15 @@ public class TrainerDaoImpl implements TrainerDao {
 
     @Override
     public Map<String, Trainer> getTrainersWinRateByBattleId(Integer battle_id) {
-        String sql = "SELECT " +
-                "t1.name AS Trainer1Name, t1.badges as Trainer1Badges, " +
-                "t1.trainer_rank as Trainer1Rank, t1.win_rate AS Trainer1WinRate, " +
-                "t2.name AS Trainer2Name, t2.badges as Trainer2Badges, " +
-                "t2.trainer_rank as Trainer2Rank, t2.win_rate AS Trainer2WinRate " +
-                "FROM battle b " +
-                "JOIN trainer t1 ON b.trainer1_id = t1.trainer_id " +
-                "JOIN trainer t2 ON b.trainer2_id = t2.trainer_id " +
-                "WHERE b.battle_id = :battleId";
+        String sql = "select " +
+                "t1.name as Trainer1Name, t1.badges as Trainer1Badges, " +
+                "t1.trainer_rank as Trainer1Rank, t1.win_rate as Trainer1WinRate, " +
+                "t2.name as Trainer2Name, t2.badges as Trainer2Badges, " +
+                "t2.trainer_rank as Trainer2Rank, t2.win_rate as Trainer2WinRate " +
+                "from battle b " +
+                "join trainer t1 on b.trainer1_id = t1.trainer_id " +
+                "join trainer t2 on b.trainer2_id = t2.trainer_id " +
+                "where b.battle_id = :battleId";
 
         Map<String, Object> map = new HashMap<>();
         map.put("battleId", battle_id);
