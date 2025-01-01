@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>賭博模擬頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+        .form-section {
+            margin: 20px auto;
+            width: 80%;
+            text-align: left;
+        }
+        .form-section label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        .form-section input {
+            padding: 5px;
+            margin: 5px 0;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .bet-section {
+            margin-top: 20px;
+        }
+    </style>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js"></script>
+    <script>
+        const trainerData = [
+            { TrainerID: 1, Name: "Ash", Badges: 8, Rank: "Master", WinRate: 85 },
+            { TrainerID: 2, Name: "Misty", Badges: 4, Rank: "Ultra", WinRate: 75 },
+            { TrainerID: 3, Name: "Brock", Badges: 3, Rank: "Super", WinRate: 65 },
+            { TrainerID: 4, Name: "Gary", Badges: 10, Rank: "Master", WinRate: 90 },
+            { TrainerID: 5, Name: "Tracey", Badges: 2, Rank: "Super", WinRate: 60 }
+        ];
+
+        function calculateWinProbability(trainer1, trainer2) {
+            const rankWeight = { "Super": 1, "Ultra": 2, "Master": 3 };
+
+            // 計算分數
+            const score1 = (rankWeight[trainer1.trainer_rank] * 50) + (trainer1.badges * 3) + (trainer1.win_rate * 2);
+            const score2 = (rankWeight[trainer2.trainer_rank] * 50) + (trainer2.badges * 3) + (trainer2.win_rate * 2);
+
+            // 計算勝率
+            const trainer1WinProb = (score1 / (score1 + score2)) * 100;
+            const trainer2WinProb = (score2 / (score1 + score2)) * 100;
+
+            return {
+                trainer1WinProb: trainer1WinProb.toFixed(2),
+                trainer2WinProb: trainer2WinProb.toFixed(2),
+                trainer1Odds: (100 / trainer1WinProb).toFixed(2),
+                trainer2Odds: (100 / trainer2WinProb).toFixed(2)
+            };
+        }
+
+        function displayBattlePrediction() {
+            const trainer1ID = parseInt(document.getElementById("trainer1ID").value, 10);
+            //const trainer1 = trainerData.find(trainer => trainer.TrainerID == trainer1ID);
+
+            $.ajax({
+                url: `/trainers/${trainer1ID}`,
+                type: 'GET',
+                //contentType:"application/json;charset=UTF-8",
+                dataType: "json",
+                success: function(res) {
+                    console.log('success:', res);
+                    document.getElementById("trainer1Info").innerHTML = `
+                        Name: ${res.trainer1.name} <br>
+                        Badges: ${res.trainer1.badges} <br>
+                        Rank: ${res.trainer1.trainer_rank} <br>
+                        Win Rate: ${res.trainer1.win_rate}% <br>
+                    `;
+                    document.getElementById("trainer2Info").innerHTML = `
+                        Name: ${res.trainer2.name} <br>
+                        Badges: ${res.trainer2.badges} <br>
+                        Rank: ${res.trainer2.trainer_rank} <br>
+                        Win Rate: ${res.trainer2.win_rate}% <br>
+                    `;
+
+                    // 計算並顯示預測結果
+                    const result = calculateWinProbability(res.trainer1, res.trainer2);
+                    document.getElementById("predictionResult").innerHTML = `
+                        Trainer 1 勝率: ${result.trainer1WinProb}% <br>
+                        Trainer 2 勝率: ${result.trainer2WinProb}% <br>
+                        Trainer 1 賠率: ${result.trainer1Odds} <br>
+                        Trainer 2 賠率: ${result.trainer2Odds}
+                    `;
+                },
+                error: function(xhr, status, error) {
+                    console.log('error:', status, error);
+                }
+            });
+
+
+
+        }
+
+        function displayFormula() {
+            alert("比賽預測公式：\n" +
+                "得分 = (階級權重 × 50) + (徽章數 × 3) + (勝率 × 2)\n" +
+                "Trainer 勝率 = 該 Trainer 得分 / (Trainer 1 得分 + Trainer 2 得分)\n" +
+                "賠率 = 100 / 勝率");
+        }
+    </script>
+</head>
+<body>
+    <header>
+        賭博模擬頁面
+    </header>
+    <div class="form-section">
+        <label for="trainer1ID">Battle ID:</label>
+        <input type="number" id="trainer1ID" placeholder="Enter Battle ID">
+        <br>
+        <button onclick="displayBattlePrediction()">按我查詢對戰預測</button>
+        <button onclick="displayFormula()">點我看比賽預測公式</button>
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.location.href='index.html'" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">回到首頁</button>
+        </div>
+    </div>
+    <div class="result">
+        <h3>Trainer 1 資訊:</h3>
+        <div id="trainer1Info"></div>
+        <h3>Trainer 2 資訊:</h3>
+        <div id="trainer2Info"></div>
+        <h3>對戰預測結果:</h3>
+        <div id="predictionResult"></div>
+    </div>
+    <div class="bet-section">
+        <h3>下注模擬:</h3>
+        <p>選擇您認為會贏的訓練師，並輸入下注金額。</p>
+        <label for="betTrainer">選擇訓練師:</label>
+        <select id="betTrainer">
+            <option value="1">Trainer 1</option>
+            <option value="2">Trainer 2</option>
+        </select>
+        <br>
+        <label for="betAmount">下注金額:</label>
+        <input type="number" id="betAmount" placeholder="Enter Bet Amount">
+        <br>
+        <button onclick="simulateBet()">開始下注</button>
+        <div id="betResult"></div>
+    </div>
+    <script>
+        function simulateBet() {
+            const betTrainer = document.getElementById("betTrainer").value;
+            const betAmount = parseFloat(document.getElementById("betAmount").value);
+            const result = document.getElementById("predictionResult").textContent;
+
+            //if (!betAmount || betAmount <= 0) {
+                //alert("請輸入有效的下注金額！");
+                //return;
+            //}
+
+            const odds1 = parseFloat(result.match(/Trainer 1 賠率: (\d+\.\d+)/)[1]);
+            const odds2 = parseFloat(result.match(/Trainer 2 賠率: (\d+\.\d+)/)[1]);
+
+            let payout;
+            if (betTrainer == "1") {
+                payout = (betAmount * odds1).toFixed(2);
+                document.getElementById("betResult").innerHTML = `若 Trainer 1 獲勝，您將贏得 ${payout}！`;
+            } else {
+                payout = (betAmount * odds2).toFixed(2);
+                document.getElementById("betResult").innerHTML = `若 Trainer 2 獲勝，您將贏得 ${payout}！`;
+            }
+        }
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查詢訓練家</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+        .filter {
+            margin: 20px auto;
+            width: 80%;
+            text-align: left;
+        }
+        .filter label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        .filter input, .filter select {
+            padding: 5px;
+            margin: 5px 0;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #ddd;
+        }
+        .sort-info {
+            margin: 10px auto;
+            font-size: 1rem;
+            color: #555;
+        }
+        .pokemon-details {
+            margin-top: 20px;
+        }
+    </style>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js"></script>
+    <script>
+        let trainerData = [
+            { TrainerID: 1, Name: "Ash", Badges: 8, Rank: "Master", WinRate: 85 },
+            { TrainerID: 2, Name: "Misty", Badges: 4, Rank: "Ultra", WinRate: 75 },
+            { TrainerID: 3, Name: "Brock", Badges: 3, Rank: "Super", WinRate: 65 },
+            { TrainerID: 4, Name: "Gary", Badges: 10, Rank: "Master", WinRate: 90 },
+            { TrainerID: 5, Name: "Tracey", Badges: 2, Rank: "Super", WinRate: 60 }
+        ];
+        let clearData = [];
+
+        let currentSort = "";
+        let sortOrder = true;
+
+        function filterTrainers() {
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+            const nameFilter = document.getElementById("nameFilter").value.toLowerCase();
+            const badgesFilter = document.getElementById("badgesFilter").value;
+            const winRateFilter = document.getElementById("winRateFilter").value;
+            const rankFilter = document.getElementById("rankFilter").value;
+
+            const filteredData = trainerData.filter(trainer => {
+                const competitionCriteria = {
+                    "novice": trainer.Badges < 4 && trainer.Rank === "Super",
+                    "rookie": trainer.Badges >= 4 && trainer.Badges <= 7 && trainer.Rank === "Super",
+                    "super": trainer.Badges === 8 && trainer.Rank === "Super",
+                    "advanced": trainer.Badges === 8 && trainer.Rank === "Ultra",
+                    "master": trainer.Badges === 8 && trainer.Rank === "Master",
+                    "elite-master": trainer.Badges === 8 && trainer.Rank === "Master" && trainer.WinRate > 60
+                };
+
+                return (
+                    (!trainerIDFilter || trainer.TrainerID == trainerIDFilter) &&
+                    (!nameFilter || trainer.Name.toLowerCase().includes(nameFilter)) &&
+                    (!badgesFilter || trainer.Badges >= badgesFilter) &&
+                    (!winRateFilter || trainer.WinRate >= winRateFilter) &&
+                    (rankFilter === "all" || trainer.Rank === rankFilter)
+                );
+            });
+
+            displayTable(filteredData);
+            enter();
+        }
+
+        function clearFilters() {
+            document.getElementById("trainerIDFilter").value = "";
+            document.getElementById("nameFilter").value = "";
+            document.getElementById("badgesFilter").value = "";
+            document.getElementById("winRateFilter").value = "";
+            document.getElementById("rankFilter").value = "all";
+            displayTable(clearData);
+        }
+
+        function displayRecruitmentRules() {
+            alert("參加資格：\n" +
+                  "新手盃: 擁有少於4個徽章，階級為Super\n" +
+                  "全國新人盃: 擁有4~7個徽章，階級為Super\n" +
+                  "超級盃: 擁有8個徽章，階級為Super\n" +
+                  "高級盃: 擁有8個徽章，階級為Ultra\n" +
+                  "大師盃: 擁有8個徽章，階級為Master\n" +
+                  "頂點大師盃: 擁有8個徽章，階級為Master，且勝率高於60");
+        }
+
+        function displayTable(data) {
+            let html = "<table><tr>";
+            if (data.length > 0) {
+                const keys = Object.keys(data[0]);
+                keys.forEach(key => {
+                    html += `<th onclick="sortTable('${key}')">${key}</th>`;
+                });
+                html += "</tr>";
+                html += "<tbody id=\"databody\"></tbody>";
+
+            } else {
+                html += "<th>No Data</th></tr><tr><td>No Data Available</td></tr>";
+            }
+            html += "</table>";
+
+            document.getElementById("dataDisplay").innerHTML = html;
+        }
+
+        function enter() {
+            var memberlist = {};
+            var apiurl = "/trainers";
+            var list_html = "<tr><th class='id' scope='col'>{{id}}</th><th class='name' scope='col'>{{name}}</th><th class='badges' scope='col'>{{badges}}</th><th class='trainer_rank' scope='col'>{{trainer_rank}}</th><th class='win_rate' scope='col'>{{win_rate}}</th></tr>";
+
+            const nameFilter = document.getElementById("nameFilter").value;
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+            const badgesFilter = document.getElementById("badgesFilter").value;
+            const winRateFilter = document.getElementById("winRateFilter").value;
+            const rankFilter = document.getElementById("rankFilter").value;
+
+            $.ajax({
+                url: apiurl,
+                type: 'POST',
+                contentType:"application/json;charset=UTF-8",
+                data: JSON.stringify({ badges: badgesFilter, trainer_rank: rankFilter, win_rate: winRateFilter }),
+                dataType: "json",
+                success: function(res) {
+                    console.log('success:', res);
+                    memberlist.list = res;
+
+                    for (var i = 0; i < memberlist.list.length; i++) {
+                        var current_html = list_html
+                            .replace("{{id}}", memberlist.list[i].trainer_id)
+                            .replace("{{name}}", memberlist.list[i].name)
+                            .replace("{{badges}}", memberlist.list[i].badges)
+                            .replace("{{trainer_rank}}", memberlist.list[i].trainer_rank)
+                            .replace("{{win_rate}}", memberlist.list[i].win_rate);
+
+                        $("#databody").append(current_html);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('error:', status, error);
+                }
+            });
+        }
+
+        function sortTable(column) {
+            if (currentSort === column) {
+                sortOrder = !sortOrder;
+            } else {
+                currentSort = column;
+                sortOrder = true;
+            }
+
+            trainerData.sort((a, b) => {
+                if (a[column] < b[column]) return sortOrder ? -1 : 1;
+                if (a[column] > b[column]) return sortOrder ? 1 : -1;
+                return 0;
+            });
+
+            document.getElementById("sortInfo").textContent = `Currently sorted by: ${column} (${sortOrder ? "Ascending" : "Descending"})`;
+            displayTable(trainerData);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            displayTable(trainerData);
+        });
+    </script>
+</head>
+<body>
+    <header>
+        查詢訓練家
+    </header>
+    <div class="filter">
+        <label for="trainerIDFilter">Trainer ID:</label>
+        <input type="number" id="trainerIDFilter" placeholder="Enter Trainer ID">
+        <br>
+        <label for="nameFilter">Name:</label>
+        <input type="text" id="nameFilter" placeholder="Enter Name">
+        <br>
+        <label for="badgesFilter">Badges:</label>
+        <input type="number" id="badgesFilter" placeholder="Enter Minimum Badges">
+        <br>
+        <label for="winRateFilter">Win Rate:</label>
+        <input type="number" id="winRateFilter" placeholder="Enter Minimum Win Rate">
+        <br>
+        <label for="rankFilter">Rank:</label>
+        <select id="rankFilter">
+            <option value="all">All</option>
+            <option value="Super">Super</option>
+            <option value="Ultra">Ultra</option>
+            <option value="Master">Master</option>
+        </select>
+        <br>
+        <br>
+        <button onclick="filterTrainers()">Apply Filter</button>
+        <button onclick="clearFilters()">Clear Filters</button>
+        <button onclick="displayRecruitmentRules()">顯示招募規則</button>
+        <button onclick="window.location.href='gambling_simulation.html'" style="margin-top: 20px; padding: 10px 20px;">點我下注</button>
+    </div>
+    <div class="sort-info" id="sortInfo">Click column headers to sort</div>
+    <div id="dataDisplay" style="margin-top: 50px;"></div>
+
+  
+
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="window.location.href='index.html'" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">回到首頁</button>
+    </div>
+    
+</body>
+</html>

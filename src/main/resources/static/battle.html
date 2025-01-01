@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查詢對戰紀錄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+        .filter {
+            margin: 20px auto;
+            width: 80%;
+            text-align: left;
+        }
+        .filter label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+        }
+        .filter input, .filter select {
+            padding: 5px;
+            margin: 5px 0;
+        }
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            cursor: pointer;
+        }
+        th:hover {
+            background-color: #ddd;
+        }
+        .sort-info {
+            margin: 10px auto;
+            font-size: 1rem;
+            color: #555;
+        }
+    </style>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js"></script>
+    <script>
+        let battleData = [
+            { BattleID: 1, Trainer1ID: 1, Trainer2ID: 2, BattleResult: "Trainer1WIN" },
+            { BattleID: 2, Trainer1ID: 3, Trainer2ID: 4, BattleResult: "Trainer2WIN" },
+            { BattleID: 3, Trainer1ID: 1, Trainer2ID: 3, BattleResult: "Trainer1WIN" },
+            { BattleID: 4, Trainer1ID: 4, Trainer2ID: 5, BattleResult: "Trainer2WIN" },
+            { BattleID: 5, Trainer1ID: 2, Trainer2ID: 5, BattleResult: "Trainer1WIN" }
+        ];
+        let clearData = [];
+
+        let currentSort = "";
+        let sortOrder = true;
+
+        function filterBattlesLose() {
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+            const filteredData = battleData.filter(battle => {
+                return (
+                    (!trainerIDFilter ||
+                        (battle.Trainer1ID == trainerIDFilter && battle.BattleResult === "Trainer2WIN") ||
+                        (battle.Trainer2ID == trainerIDFilter && battle.BattleResult === "Trainer1WIN"))
+                );
+            });
+            displayTable(filteredData);
+        }
+
+        function filterBattlesWin() {
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+
+            displayTable(battleData);
+            enter();
+        }
+
+        function filterBattlesJoin() {
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+            const filteredData = battleData.filter(battle => {
+                return (
+                    (!trainerIDFilter || battle.Trainer1ID == trainerIDFilter || battle.Trainer2ID == trainerIDFilter)
+                );
+            });
+            displayTable(filteredData);
+        }
+
+        function clearFilters() {
+            document.getElementById("trainerIDFilter").value = "";
+            displayTable(clearData);
+        }
+
+        function displayTable(data) {
+            let html = "<table><tr>";
+            if (data.length > 0) {
+                const keys = Object.keys(data[0]);
+                keys.forEach(key => {
+                    html += `<th onclick="sortTable('${key}')">${key}</th>`;
+                });
+                html += "</tr>";
+                html += "<tbody id='databody'></tbody>";
+            } else {
+                html += "<th>No Data</th></tr><tr><td>No Data Available</td></tr>";
+            }
+            html += "</table>";
+
+            document.getElementById("dataDisplay").innerHTML = html;
+        }
+
+        function enter() {
+            $("#databody").empty();
+
+            const trainerIDFilter = document.getElementById("trainerIDFilter").value;
+
+            $.ajax({
+                url: `/battles/${trainerIDFilter}`,
+                type: 'GET',
+                dataType: "json",
+                success: function(res) {
+                    console.log('success:', res);
+                    if (Array.isArray(res)) {
+                        console.log('Data is an array:', res);
+
+                        if (res.length > 0) {
+
+                            res.forEach(battle => {
+                                let current_html = `<tr>
+          <td class='battle_id'>${battle.battle_id || 'N/A'}</td>
+          <td class='trainer1_id'>${battle.trainer1_id || 'N/A'}</td>
+          <td class='trainer2_id'>${battle.trainer2_id || 'N/A'}</td>
+          <td class='battle_result'>${battle.battle_result || 'N/A'}</td>
+        </tr>`;
+
+                                $("#databody").append(current_html);
+                            });
+                        } else {
+
+                            let current_html = "<tr><td colspan='8'>No data found for this battle.</td></tr>";
+                            $("#databody").append(current_html);
+                        }
+                    } else {
+                        console.error('Received data is not an array:', res);
+                        let current_html = "<tr><td colspan='8'>Error: Data is not in the expected format.</td></tr>";
+                        $("#databody").append(current_html);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', status, error);
+                }
+            });
+        }
+
+        function sortTable(column) {
+            if (currentSort === column) {
+                sortOrder = !sortOrder;
+            } else {
+                currentSort = column;
+                sortOrder = true;
+            }
+
+            battleData.sort((a, b) => {
+                if (a[column] < b[column]) return sortOrder ? -1 : 1;
+                if (a[column] > b[column]) return sortOrder ? 1 : -1;
+                return 0;
+            });
+
+            document.getElementById("sortInfo").textContent = `Currently sorted by: ${column} (${sortOrder ? "Ascending" : "Descending"})`;
+            displayTable(battleData);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            displayTable(battleData);
+        });
+    </script>
+</head>
+<body>
+    <header>
+        查詢對戰紀錄
+    </header>
+    <div class="filter">
+        <label for="trainerIDFilter">Trainer ID:</label>
+        <input type="number" id="trainerIDFilter" placeholder="Enter Trainer ID">
+        <br>
+        <button onclick="filterBattlesWin()">Apply Trainer Id</button>
+        <button onclick="clearFilters()">Clear Filters</button>
+    </div>
+    <div class="sort-info" id="sortInfo">Click column headers to sort</div>
+    <div id="dataDisplay" style="margin-top: 50px;"></div>
+
+
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="window.location.href='index.html'" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">回到首頁</button>
+    </div>
+    
+</body>
+</html>

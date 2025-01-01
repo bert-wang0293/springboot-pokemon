@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寶可夢資料查詢</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            font-size: 1.5rem;
+        }
+        .container {
+            margin-top: 100px;
+        }
+        button {
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            margin: 20px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        function navigateTo(page) {
+            switch (page) {
+                case 'pokemon':
+                    window.location.href = 'pokemon.html';
+                    break;
+                case 'trainer':
+                    window.location.href = 'trainer.html';
+                    break;
+                case 'battle':
+                    window.location.href = 'battle.html';
+                    break;
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        寶可夢資料查詢系統
+    </header>
+    <div class="container">
+        <button onclick="navigateTo('pokemon')">查詢寶可夢</button>
+        <button onclick="navigateTo('trainer')">查詢訓練家</button>
+        <button onclick="navigateTo('battle')">查詢對戰紀錄</button>
+    </div>
+</body>
+</html>
